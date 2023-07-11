@@ -37,6 +37,9 @@ export interface SamlStrategyOptions {
   privateKey?: string;
   privateKeyPass?: string;
   encPrivateKey?: string;
+  loginRequestTemplate?: {
+    context: string
+  }
 }
 
 export interface SamlStrategyVerifyParams {
@@ -110,6 +113,7 @@ export class SamlStrategy<User> extends Strategy<
 
     this.spData = {
       entityID: this.authURL,
+      loginRequestTemplate: options.loginRequestTemplate,
       authnRequestsSigned: options.spAuthnRequestSigned,
       wantAssertionsSigned: options.spWantAssertionSigned,
       wantMessageSigned: options.spWantMessageSigned,
