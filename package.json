@@ -5,7 +5,7 @@
   "homepage": "https://github.com/christopherpickering/remix-auth-saml",
   "repository": {
     "type": "git",
-    "url": "github:christopherpickering/remix-auth-saml"
+    "url": "github:lwvprint/remix-auth-saml"
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
