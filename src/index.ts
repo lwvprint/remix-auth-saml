@@ -257,7 +257,7 @@ export class SamlStrategy<User> extends Strategy<
   async logout(
     request: Request,
     sessionStorage: SessionStorage,
-    userInfo: {
+    userInfo?: {
       loginNameID: string;
       sessionIndex: string;
     }
@@ -272,9 +272,13 @@ export class SamlStrategy<User> extends Strategy<
     }
     if (url.pathname !== this.authURL + "/auth/saml/slo") {
       debug("Redirecting to ipd logout URL");
+      if (!userInfo) {
+        debug("Missing user info for the logout");
+        throw redirect(url.origin);
+      }
       const logoutURL = await this.getLogoutURL(request, userInfo);
       throw redirect(logoutURL.toString(), {
-        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+        headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
       });
     }
 
