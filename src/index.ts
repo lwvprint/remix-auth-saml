@@ -70,6 +70,7 @@ export interface SamlStrategyVerifyParams {
  *
  * Options:
  * - `validator` Validator installed following samlify's guide.
+ * - `singleLogoutActive` Whether to enable single logout.
  * - `authURL` Websites base url.
  * - `callbackURL` Authentication callback url.
  * - `idpMetadataURL` URL for IDP Metadata xml file.
@@ -79,6 +80,8 @@ export interface SamlStrategyVerifyParams {
  * - `spWantLogoutRequestSigned`
  * - `spWantLogoutResponseSigned`
  * - `spIsAssertionEncrypted`
+ * - `loginRequestTemplate` Optional login request template.
+ * - `logoutRequestTemplate` Optional logout request template.
  * - `privateKey` Optional path to private key.
  * - `privateKeyPass` Optional private key password.
  * - `encPrivateKey` Optional path to encrypted private key.
