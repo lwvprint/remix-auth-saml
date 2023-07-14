@@ -270,7 +270,7 @@ export class SamlStrategy<User> extends Strategy<
     if (!user) {
       return redirect(url.origin);
     }
-    if (url.pathname === this.authURL + "/auth/saml/slo") {
+    if (url.pathname !== this.authURL + "/auth/saml/slo") {
       debug("Redirecting to ipd logout URL");
       const logoutURL = await this.getLogoutURL(request, userInfo);
       throw redirect(logoutURL.toString(), {
