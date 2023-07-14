@@ -1,11 +1,11 @@
 import { redirect, SessionStorage } from "@remix-run/server-runtime";
 
+import createDebug from "debug";
 import {
   AuthenticateOptions,
   Strategy,
   StrategyVerifyCallback,
 } from "remix-auth";
-import createDebug from "debug";
 
 import fs from "fs";
 import * as samlify from "samlify";
@@ -25,6 +25,7 @@ interface ValidatorContext {
 
 export interface SamlStrategyOptions {
   validator: ValidatorContext;
+  singleLogoutActive: boolean;
   authURL: string;
   callbackURL: string;
   idpMetadataURL: string;
@@ -38,8 +39,19 @@ export interface SamlStrategyOptions {
   privateKeyPass?: string;
   encPrivateKey?: string;
   loginRequestTemplate?: {
-    context: string
-  }
+    context: string;
+  };
+  logoutRequestTemplate?: {
+    context: string;
+    attributes?: [
+      {
+        name: string;
+        valueTag: string;
+        nameFormat: string;
+        valueXsiType: string;
+      }
+    ];
+  };
 }
 
 export interface SamlStrategyVerifyParams {
@@ -113,12 +125,13 @@ export class SamlStrategy<User> extends Strategy<
 
     this.spData = {
       entityID: this.authURL,
-      loginRequestTemplate: options.loginRequestTemplate,
       authnRequestsSigned: options.spAuthnRequestSigned,
       wantAssertionsSigned: options.spWantAssertionSigned,
       wantMessageSigned: options.spWantMessageSigned,
+      loginRequestTemplate: options.loginRequestTemplate,
       wantLogoutResponseSigned: options.spWantLogoutRequestSigned,
       wantLogoutRequestSigned: options.spWantLogoutRequestSigned,
+      logoutRequestTemplate: options.logoutRequestTemplate,
       isAssertionEncrypted: options.spIsAssertionEncrypted,
       assertionConsumerService: [
         {
@@ -130,16 +143,18 @@ export class SamlStrategy<User> extends Strategy<
           Location: this.callbackURL,
         },
       ],
-      // singleLogoutService: [
-      //   {
-      //     Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
-      //     Location: this.authURL + "/auth/slo",
-      //   },
-      //   {
-      //     Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
-      //     Location: this.authURL + "/auth/slo",
-      //   },
-      // ],
+      singleLogoutService: options.singleLogoutActive
+        ? [
+            {
+              Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+              Location: this.authURL + "/auth/saml/slo",
+            },
+            {
+              Binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+              Location: this.authURL + "/auth/saml/slo",
+            },
+          ]
+        : undefined,
       privateKey: options.privateKey
         ? fs.readFileSync(options.privateKey)
         : undefined,
@@ -234,6 +249,50 @@ export class SamlStrategy<User> extends Strategy<
     debug("User authenticated");
 
     return await this.success(user, request, sessionStorage, options);
+  }
+
+  async logout(request, sessionStorage, userInfo) {
+    let url = new URL(request.url);
+    let session = await sessionStorage.getSession(
+      request.headers.get("Cookie")
+    );
+    let user: User | null = session.get("user") ?? null;
+    if (!user) {
+      return redirect(url.origin);
+    }
+    const logoutURL = await this.getLogoutURL(request, userInfo);
+    throw redirect(logoutURL.toString(), {
+      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+    });
+  }
+  private async getLogoutURL(
+    request: Request,
+    userInfo: {
+      nameID: string;
+      sessionIndex: string;
+    }
+  ) {
+    const idp = await this.getIdp();
+    const { context } = this.sp.createLogoutRequest(idp, "redirect", {
+      logoutNameID: userInfo.nameID,
+      sessionIndex: userInfo.sessionIndex,
+    });
+    let params = new URLSearchParams(
+      this.authorizationParams(new URL(context).searchParams)
+    );
+    let requestParams = new URLSearchParams(
+      this.authorizationParams(new URL(request.url).searchParams)
+    );
+    params.set(
+      "RelayState",
+      requestParams.get("returnTo") ||
+        requestParams.get("relayState") ||
+        requestParams.get("redirect_url") ||
+        this.getCallbackURL(new URL(request.url)).toString()
+    );
+    let url = new URL(context);
+    url.search = params.toString();
+    return url;
   }
 
   private async getAuthorizationURL(request: Request) {
