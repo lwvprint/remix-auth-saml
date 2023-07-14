@@ -289,12 +289,12 @@ export class SamlStrategy<User> extends Strategy<
       });
       if (!extract.nameID) {
         debug("Failed to logout.");
-        console.log("Failed to logout.");
       }
-      console.log({ extract });
+      throw redirect("/", {
+        headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
+      });
     } catch (error) {
       debug("Failed to logout user", error);
-      console.log(error);
     }
   }
   private async getLogoutURL(
@@ -324,7 +324,6 @@ export class SamlStrategy<User> extends Strategy<
     );
     let url = new URL(context);
     url.search = params.toString();
-    console.log(url.toString());
     return url;
   }
 
