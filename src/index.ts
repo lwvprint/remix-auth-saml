@@ -254,7 +254,14 @@ export class SamlStrategy<User> extends Strategy<
     return await this.success(user, request, sessionStorage, options);
   }
 
-  async logout(request, sessionStorage, userInfo) {
+  async logout(
+    request: Request,
+    sessionStorage: SessionStorage,
+    userInfo: {
+      loginNameID: string;
+      sessionIndex: string;
+    }
+  ) {
     let url = new URL(request.url);
     let session = await sessionStorage.getSession(
       request.headers.get("Cookie")
@@ -271,13 +278,13 @@ export class SamlStrategy<User> extends Strategy<
   private async getLogoutURL(
     request: Request,
     userInfo: {
-      nameID: string;
+      loginNameID: string;
       sessionIndex: string;
     }
   ) {
     const idp = await this.getIdp();
     const { context } = this.sp.createLogoutRequest(idp, "redirect", {
-      logoutNameID: userInfo.nameID,
+      logoutNameID: userInfo.loginNameID,
       sessionIndex: userInfo.sessionIndex,
     });
     let params = new URLSearchParams(
