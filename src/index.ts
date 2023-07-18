@@ -328,6 +328,7 @@ export class SamlStrategy<User> extends Strategy<
     );
     let url = new URL(context);
     url.search = params.toString();
+    console.log("Logout URL:", { url });
     return url;
   }
 
@@ -353,6 +354,7 @@ export class SamlStrategy<User> extends Strategy<
 
     let url = new URL(context);
     url.search = params.toString();
+    console.log("Authorization URL:", { url });
     return url;
   }
   protected authorizationParams(params: URLSearchParams): URLSearchParams {
