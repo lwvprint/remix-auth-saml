@@ -288,7 +288,7 @@ export class SamlStrategy<User> extends Strategy<
       const formData = await request.formData();
       const body = Object.fromEntries(formData);
       const idp = await this.getIdp();
-      const { extract } = await this.sp.parseLogoutResponse(idp, "post", {
+      const { extract } = await this.sp.parseLogoutResponse(idp, "redirect", {
         body,
       });
       if (!extract.nameID) {
