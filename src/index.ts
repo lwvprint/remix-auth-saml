@@ -276,7 +276,7 @@ export class SamlStrategy<User> extends Strategy<
       console.log("User info:", userInfo);
       const logoutURL = await this.getLogoutURL(request, userInfo);
       throw redirect(logoutURL.toString(), {
-        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+        headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
       });
     }
 
