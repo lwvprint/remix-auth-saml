@@ -276,7 +276,7 @@ export class SamlStrategy<User> extends Strategy<
       console.log("User info:", userInfo);
       const logoutURL = await this.getLogoutURL(request, userInfo);
       throw redirect(logoutURL.toString(), {
-        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+        headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
       });
     }
 
@@ -286,7 +286,7 @@ export class SamlStrategy<User> extends Strategy<
       const formData = await request.formData();
       const body = Object.fromEntries(formData);
       const idp = await this.getIdp();
-      const { extract } = await this.sp.parseLogoutResponse(idp, "post", {
+      const { extract } = await this.sp.parseLogoutResponse(idp, "redirect", {
         body,
       });
       if (!extract.nameID) {
@@ -307,7 +307,7 @@ export class SamlStrategy<User> extends Strategy<
     }
   ) {
     const idp = await this.getIdp();
-    const { context } = this.sp.createLogoutRequest(idp, "redirect", {
+    const { context } = this.sp.createLogoutRequest(idp, "post", {
       logoutNameID: userInfo.loginNameID,
       sessionIndex: userInfo.sessionIndex,
     });
