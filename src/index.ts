@@ -273,7 +273,6 @@ export class SamlStrategy<User> extends Strategy<
         debug("Missing user info for the logout");
         throw redirect(url.origin);
       }
-      console.log("User info:", userInfo);
       const logoutURL = await this.getLogoutURL(request, userInfo);
       throw redirect(logoutURL.toString(), {
         headers: { "Set-Cookie": await sessionStorage.destroySession(session) },
@@ -326,7 +325,6 @@ export class SamlStrategy<User> extends Strategy<
     );
     let url = new URL(context);
     url.search = params.toString();
-    console.log("Logout URL:", { url });
     return url;
   }
 
@@ -352,7 +350,6 @@ export class SamlStrategy<User> extends Strategy<
 
     let url = new URL(context);
     url.search = params.toString();
-    console.log("Authorization URL:", { url });
     return url;
   }
   protected authorizationParams(params: URLSearchParams): URLSearchParams {
